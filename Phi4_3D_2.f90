@@ -12,44 +12,44 @@
  program Phi4_3D
 
   ! Parameters
-    integer, parameter :: L=10, sps=1500, Ndat=20     ! Nº of sites in one dimension, Steps per site, Nº of measured Q
-    real, parameter :: d=0.35, CE0=1.0                ! Width param, Coupling const/Energy barrier for local wells
-    real, parameter :: beta=1.0/4.0                   ! Inverse temperature
+    integer, parameter :: L=10, sps=2E7, Ndat=1E4     ! Nº of sites in one dimension, Steps per site, Nº of measured Q
+    integer, parameter :: therm=5E5                   ! Thermalization steps
+    real, parameter :: d=0.55, CE0=1.0                ! Width param, Coupling const/Energy barrier for local wells
+    real, parameter :: beta=1.0/3.0                   ! Inverse temperature
   ! Variables
     integer :: N                                      ! Last site's number: N=L*L*L - 1
-    real :: E, dE, Qavrg                              ! Energy, Energy diff, Average Q value
+    real :: E, dE, Qavrg                              ! Inverse temp, Energy, Energy diff, Average Q value
     real, dimension(0:L*L*L-1) :: X                   ! L*L*L array containing spins (HELICAL B.C.)
-!    real, dimension(0:Ndat) :: histo                  ! Array containing measured Q values (averages)
     real, dimension(sps) :: Qarr                      ! Array containning Q values 
   ! Dummy variables
     integer :: k, kdat
 
     N = L*L*l - 1
     
-    open(unit=11, file="test.txt", status="replace", action="write")
+    open(unit=11, file="histogram_T3_p1_d055.txt", status="replace", action="write")
     Histogram_loop: do kdat = 0, Ndat
      ! Initialize 'X'
-       call initial_state(X, L, N, 0, E)
+       X = 1.0
+       E = 0.0
 
-       Time: do k = 1, sps
+       Time: do k = 1, (sps + therm)
           call sweep(L, N, beta, d, CE0, X, E)
           Qarr(k) = sum(X) ! Qi*(N+1)
        enddo Time
 
      ! Average over the last measures
-       call average(sps-50, sps, Qarr, Qavrg)
+       call average(sps, sps+therm, Qarr, Qavrg)
        write(unit=11, fmt=*) Qavrg/(N+1)
-!       histo(kdat) = Qavrg/(N+1)
     enddo Histogram_loop
     close(unit=11)
-
-!    call histogram(histo, Ndat, 2)
 
 
 ! -------------------------------------------------------------------------------------------------------------- !
 
 
  contains
+
+!  subroutine initial_state
 
   subroutine random(random_result, low, high)
 ! Returns a real random value in the range [low, high]. From "Fortran 95 Using F".
@@ -96,37 +96,7 @@
      
      H = ( (xi+dx)**2 - 1)**2 + 0.5*CE0*summation
   endsubroutine
-
-
-  subroutine initial_state(X, L, N, state, E)
-! Returns the array X corresponding to the initial state. The variable 'state' corresponds to its
-! temperature: if state=0 it's the X=1 state, and if state=1 it's an initial random state (X=rand).
-  
-     integer, intent(in) :: L, N, state
-     real, dimension(0:N), intent(in out) :: X
-     real, intent(out) :: E
-     integer :: ix
-     real :: r, dE
-     real, dimension(6) :: nn_val
-
-     select case(state)
-        case(0)
-           X = 1.0
-           E = 0.0
-        case(1)
-           Lattice: do ix = 0, N
-              call random(r, -1.0, 1.0)
-              X(ix) = r
-           enddo Lattice
-           E = 0.0
-           Energy: do ix = 0, N
-              call nn_values(ix, X, L, N, nn_val)
-              call hamiltonian(X(ix), 0.0, nn_val, CE0, dE)
-              E = E + dE
-           enddo Energy
-     endselect
-   endsubroutine initial_state
-
+    
 
   subroutine energy_diff(xi, dx, CE0, rand_int, X, L, N, dE)
 ! Returns the energy difference 'dE' between xi and xi + dx, which is calculated 

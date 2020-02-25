@@ -11,9 +11,9 @@
  program Phi4_3D
 
   ! Parameters
-    integer, parameter :: L=10, sps=20000               ! Number of sites in one dimension, Steps per site
+    integer, parameter :: L=50, sps=2E7, therm=5E5      ! Number of sites in one dimension, Steps per site, Therm. steps
     real, parameter :: d=0.55, CE0=1.0                  ! Width param, Coupling consty/Energy barrier for local wells
-    real, parameter :: Tf=6.5, dT=0.2                   ! Final temp, Temp. step
+    real, parameter :: Tf=5.0, dT=0.05                  ! Final temp, Temp. step
   ! Variables
     integer :: N, Nt                                    ! Last site's number: N=L*L*L - 1, Number of temp loops
     real :: beta, E                                     ! Inverse temp, Energy
@@ -26,7 +26,7 @@
     N = L*L*l - 1 
     Nt = Tf/dT
 
-    open(unit=11, file="temp.txt", status="replace", action="write")
+    open(unit=11, file="temp_L50.txt", status="replace", action="write")
     Temp_sweep: do tk = 1, Nt
      ! Initialize 'X' and energy
        call initial_state(X, L, N, 0, E)
