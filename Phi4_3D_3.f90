@@ -11,7 +11,7 @@
  program Phi4_3D
 
   ! Parameters
-    integer, parameter :: L=50, sps=2E7, therm=5E5      ! Number of sites in one dimension, Steps per site, Therm. steps
+    integer, parameter :: L=10, sps=2E7, therm=5E5      ! Number of sites in one dimension, Steps per site, Therm. steps
     real, parameter :: d=0.55, CE0=1.0                  ! Width param, Coupling consty/Energy barrier for local wells
     real, parameter :: Tf=5.0, dT=0.05                  ! Final temp, Temp. step
   ! Variables
@@ -26,19 +26,19 @@
     N = L*L*l - 1 
     Nt = Tf/dT
 
-    open(unit=11, file="temp_L50.txt", status="replace", action="write")
+    open(unit=11, file="M_vs_T.txt", status="replace", action="write")
     Temp_sweep: do tk = 1, Nt
      ! Initialize 'X' and energy
        call initial_state(X, L, N, 0, E)
        beta = 1.0/(dT*tk)
 
-       Time: do k = 1, sps
+       Time: do k = 1, (sps + therm)
           call sweep(L, N, beta, d, CE0, X, E)
           Qarr(k) = sum(X) ! Qi*(N+1)
        enddo Time
 
      ! Average over the last 17000 measures
-       call average(sps-500, sps, Qarr, Qavrg)
+       call average(sps, sps+therm, Qarr, Qavrg)
        write(unit=11, fmt=*) dT*tk, Qavrg/(N+1)
     enddo Temp_sweep
     close(unit=11)
