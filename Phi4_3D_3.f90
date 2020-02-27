@@ -110,10 +110,10 @@
      real :: Ei, Ef
 
      call nn_values(rand_int, X, L, N, nn_val)
-     call hamiltonian(xi, 0.0, nn_val, CE0, Ei)
-     call hamiltonian(xi, dx, nn_val, CE0, Ef)
+     call hamiltonian(xi, 0.0, nn_val, CE0, Ei) ! Initial energy
+     call hamiltonian(xi, dx, nn_val, CE0, Ef) ! Final energy
 
-     dE = Ef - Ei   
+     dE = Ei - Ef   
   endsubroutine energy_diff
         
 
@@ -143,7 +143,7 @@
         if (dE <= 0.0) then  
            X(rand_int) = xi + dx
 
-        elseif (r < exp(-dE*beta*d) ) then
+        elseif (r < exp(dE*beta*d) ) then ! dE without minus sign because we take as dE=Ei-Ef=-(Ef-Ei)
            X(rand_int) = xi + dx
 
         endif
