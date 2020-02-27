@@ -1,5 +1,5 @@
 
-! Date: 2020/01/15
+! Date: 2020/02/15
 ! Version: 2.3
 ! Description:  
 !               Phi 4 model implementation. It includes a simple measurement of the order parameter Q,
