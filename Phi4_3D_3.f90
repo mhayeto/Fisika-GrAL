@@ -16,8 +16,7 @@
     real, parameter :: Tf=5.0, dT=0.05                  ! Final temp, Temp. step
   ! Variables
     integer :: N, Nt                                    ! Last site's number: N=L*L*L - 1, Number of temp loops
-    real :: beta, E                                     ! Inverse temp, Energy
-    real :: Qavrg                                       ! Average Q value and energy
+    real :: beta, Qavrg                                 ! Inverse temp, Average Q value
     real, dimension(0:L*L*L-1) :: X                     ! L*L*L array containing spins (HELICAL B.C.)
     real, dimension(sps) :: Qarr                        ! Array containing Q and energy values
   ! Dummy variables 
@@ -28,17 +27,21 @@
 
     open(unit=11, file="M_vs_T.txt", status="replace", action="write")
     Temp_sweep: do tk = 1, Nt
-     ! Initialize 'X' and energy
-       call initial_state(X, L, N, 0, E)
+     ! Initialize X
+       X = 1.0
        beta = 1.0/(dT*tk)
 
-       Time: do k = 1, (sps + therm)
-          call sweep(L, N, beta, d, CE0, X, E)
+       Thermalization: do k = 1, therm
+          call sweep(L, N, beta, d, CE0, X)
+       enddo Thermalization
+
+       Time: do k = 1, sps
+          call sweep(L, N, beta, d, CE0, X)
           Qarr(k) = sum(X) ! Qi*(N+1)
        enddo Time
 
      ! Average over the last 17000 measures
-       call average(sps, sps+therm, Qarr, Qavrg)
+       call average(sps, sps, Qarr, Qavrg)
        write(unit=11, fmt=*) dT*tk, Qavrg/(N+1)
     enddo Temp_sweep
     close(unit=11)
@@ -95,36 +98,6 @@
   endsubroutine
 
 
-  subroutine initial_state(X, L, N, state, E)
-! Returns the array X corresponding to the initial state. The variable 'state' corresponds to its
-! temperature: if state=0 it's the X=1 state, and if state=1 it's an initial random state (X=rand).
-  
-     integer, intent(in) :: L, N, state
-     real, dimension(0:N), intent(in out) :: X
-     real, intent(out) :: E
-     integer :: ix
-     real :: r, dE
-     real, dimension(6) :: nn_val
-
-     select case(state)
-        case(0)
-           X = 1.0
-           E = 0.0
-        case(1)
-           Lattice: do ix = 0, N
-              call random(r, -1.0, 1.0)
-              X(ix) = r
-           enddo Lattice
-           E = 0.0
-           Energy: do ix = 0, N
-              call nn_values(ix, X, L, N, nn_val)
-              call hamiltonian(X(ix), 0.0, nn_val, CE0, dE)
-              E = E + dE
-           enddo Energy
-     endselect
-   endsubroutine initial_state
-
-
   subroutine energy_diff(xi, dx, CE0, rand_int, X, L, N, dE)
 ! Returns the energy difference 'dE' between xi and xi + dx, which is calculated 
 ! from Phi4 model's Hamiltonian.  
@@ -144,15 +117,14 @@
   endsubroutine energy_diff
         
 
-  subroutine sweep(L, N, beta, d, CE0, X, dE)
+  subroutine sweep(L, N, beta, d, CE0, X)
 ! "Performs one 'sweep' of the lattice, i.e., one Monte Carlo step/spin, using Metropolis algorithm."
 
      integer, intent(in) :: L, N
      real, intent(in) :: beta, d, CE0
      real, dimension(0:N), intent(in out) :: X
-     real, intent(out) :: dE
      integer :: i, rand_int
-     real :: rand, xi, dx, r
+     real :: rand, xi, dx, dE, r
      real, dimension(6) :: nn_val
 
      Lattice_sweep: do i = 0, N
@@ -171,11 +143,8 @@
         if (dE <= 0.0) then  
            X(rand_int) = xi + dx
 
-        elseif (r < exp(-dE*beta) ) then
+        elseif (r < exp(-dE*beta*d) ) then
            X(rand_int) = xi + dx
-
-        else ! There is no change in xi, returned dE = 0.0
-           dE = 0.0 
 
         endif
      enddo Lattice_sweep
