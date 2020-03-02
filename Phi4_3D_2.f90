@@ -83,7 +83,7 @@
 
 
   subroutine hamiltonian(xi, dx, nn_val, CE0, H)
-! Returns the value of the model's Hamiltonian (divided by E0).
+! Returns the value of the model's Hamiltonian for a single site (divided by E0).
 
      real, intent(in) :: xi, dx, CE0
      real, dimension(6), intent(in) :: nn_val
