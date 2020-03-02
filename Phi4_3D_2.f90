@@ -12,34 +12,31 @@
  program Phi4_3D
 
   ! Parameters
-    integer, parameter :: L=10, sps=5E5, Ndat=100      ! Nº of sites in one dimension, Steps per site, Nº of measured Q
-    integer, parameter :: therm=5E3                   ! Thermalization steps
+    integer, parameter :: L=10, sps=3E5, Ndat=2E3     ! Nº of sites in one dimension, Steps per site, Nº of measured Q
+    integer, parameter :: therm=1E3                   ! Thermalization steps
     real, parameter :: d=0.55, CE0=1.0                ! Width param, Coupling const/Energy barrier for local wells
     real, parameter :: beta=1.0/3.3                   ! Inverse temperature
   ! Variables
     integer :: N                                      ! Last site's number: N=L*L*L - 1
     real :: Qavrg                                     ! Average Q value
-    real, dimension(0:L*L*L-1) :: X, Xth              ! L*L*L array containing spins (HELICAL B.C.), X after therm.
+    real, dimension(0:L*L*L-1) :: X                   ! L*L*L array containing spins (HELICAL B.C.)
     real, dimension(sps) :: Qarr                      ! Array containning Q values 
   ! Dummy variables
     integer :: k, kdat
 
     N = L*L*L - 1
-
-  ! Initialize X
-    X = 1.0
-    Thermalization: do k = 1, therm
-       call sweep(L, N, beta, d, CE0, X)
-    enddo Thermalization
-    Xth = X
     
-    open(unit=11, file="histogram_T33_p1_d055.txt", status="replace", action="write", position="append")
+    open(unit=11, file="histogram_T33_p1_d055.txt", status="old", action="write", position="append")
     Histogram_loop: do kdat = 1, Ndat
+       
+       X = 1.0
+       Thermalization: do k = 1, therm
+          call sweep(L, N, beta, d, CE0, X)
+       enddo Thermalization
 
-       X = Xth
        Time: do k = 1, sps
           call sweep(L, N, beta, d, CE0, X)
-          Qarr(k) = sum(X) ! Qi*(N+1)
+          Qarr(k) = sum(X) ! Qi*(N+i1)
        enddo Time
 
      ! Average over the last measures
@@ -53,6 +50,8 @@
 
 
  contains
+
+!  subroutine initial_state
 
   subroutine random(random_result, low, high)
 ! Returns a real random value in the range [low, high]. From "Fortran 95 Using F".
@@ -113,10 +112,10 @@
      real :: Ei, Ef
 
      call nn_values(rand_int, X, L, N, nn_val)
-     call hamiltonian(xi, 0.0, nn_val, CE0, Ei) ! Initial energy
-     call hamiltonian(xi, dx, nn_val, CE0, Ef) ! Final energy
+     call hamiltonian(xi, 0.0, nn_val, CE0, Ei)
+     call hamiltonian(xi, dx, nn_val, CE0, Ef)
 
-     dE = Ei - Ef   
+     dE = Ef - Ei   
   endsubroutine energy_diff
         
 
@@ -146,7 +145,7 @@
         if (dE <= 0.0) then  
            X(rand_int) = xi + dx
 
-        elseif (r < exp(dE*beta/d) ) then  ! dE without minus sign beacuse we take as dE=Ei-Ef=-(Ef-Ei)
+        elseif (r < exp(-dE*beta/d) ) then
            X(rand_int) = xi + dx
 
         endif
