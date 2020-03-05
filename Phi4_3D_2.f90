@@ -12,10 +12,10 @@
  program Phi4_3D
 
   ! Parameters
-    integer, parameter :: L=10, sps=3E5, Ndat=2E3     ! Nº of sites in one dimension, Steps per site, Nº of measured Q
-    integer, parameter :: therm=1E3                   ! Thermalization steps
-    real, parameter :: d=0.55, CE0=1.0                ! Width param, Coupling const/Energy barrier for local wells
-    real, parameter :: beta=1.0/3.3                   ! Inverse temperature
+    integer, parameter :: L=10, sps=1E6, Ndat=1E4     ! Nº of sites in one dimension, Steps per site, Nº of measured Q
+    integer, parameter :: therm=5E4                   ! Thermalization steps
+    real, parameter :: d=0.45, CE0=1.0                ! Width param, Coupling const/Energy barrier for local wells
+    real, parameter :: beta=1.0/3.0                   ! Inverse temperature
   ! Variables
     integer :: N                                      ! Last site's number: N=L*L*L - 1
     real :: Qavrg                                     ! Average Q value
@@ -26,9 +26,10 @@
 
     N = L*L*L - 1
     
-    open(unit=11, file="histogram_T33_p1_d055.txt", status="old", action="write", position="append")
+    open(unit=11, file="histogram_T3_p1_d045.txt", status="old", action="write", position="append")
     Histogram_loop: do kdat = 1, Ndat
-       
+
+       call random_seed()       
        X = 1.0
        Thermalization: do k = 1, therm
           call sweep(L, N, beta, d, CE0, X)
@@ -96,7 +97,7 @@
         summation = summation + (nn_val(j)-(xi+dx))**2
      enddo Nearest_neigh
      
-     H = ( (xi+dx)**2 - 1)**2 + 0.5*CE0*summation
+     H = ( (xi+dx)**2 - 1)**2 + CE0*summation
   endsubroutine
     
 
@@ -145,7 +146,7 @@
         if (dE <= 0.0) then  
            X(rand_int) = xi + dx
 
-        elseif (r < exp(-dE*beta/d) ) then
+        elseif (r < exp(-dE*beta) ) then
            X(rand_int) = xi + dx
 
         endif
@@ -169,41 +170,4 @@
 
   endsubroutine average
 
-
-  subroutine histogram(arr, length, round_dec)
-! Given any array and its length, it returns its histogram in a .txt file. The array contains real
-! values and there's the possibility to round them to any decimal place (using 'round_dec').
-
-     integer, intent(in) :: length, round_dec
-     real, dimension(0:length) :: arr
-     integer :: i, j, c
-     real :: r, numb, rep=9999999.0 ! 'rep' detects the values that are already written in the histogram, we use
-                                    ! this value because we know that Q values will be little
-
-     r = 10**round_dec
-     arr = nint(arr*r)/r
-
-     open(unit=11, file="histogram.txt", status="replace", action="write")
-     Numbers: do i = 0, length
-        numb = arr(i)
-        c = 1
-
-        if ( numb==rep ) then ! If this happens the value is already in the histogram
-           cycle
-        endif
-
-        Counter: do j = i+1, length
-        if ( arr(j)==numb ) then
-           c = c+1
-           arr(j) = rep
-        endif
-        enddo Counter
-
-        write(unit=11, fmt=*) numb, c
-     enddo Numbers
-     close(unit=11)
-
-  endsubroutine histogram
-
- 
 endprogram Phi4_3D 
