@@ -12,8 +12,8 @@
  program Phi4_3D
 
   ! Parameters
-    integer, parameter :: L=10, sps=1E6, Ndat=1E4     ! Nº of sites in one dimension, Steps per site, Nº of measured Q
-    integer, parameter :: therm=5E4                   ! Thermalization steps
+    integer, parameter :: L=10, sps=1E5, Ndat=1E4     ! Nº of sites in one dimension, Steps per site, Nº of measured Q
+    integer, parameter :: therm=5E3                   ! Thermalization steps
     real, parameter :: d=0.45, CE0=1.0                ! Width param, Coupling const/Energy barrier for local wells
     real, parameter :: beta=1.0/3.0                   ! Inverse temperature
   ! Variables
@@ -97,7 +97,7 @@
         summation = summation + (nn_val(j)-(xi+dx))**2
      enddo Nearest_neigh
      
-     H = ( (xi+dx)**2 - 1)**2 + CE0*summation
+     H = ( (xi+dx)**2 - 1)**2 + 0.5*CE0*summation
   endsubroutine
     
 
